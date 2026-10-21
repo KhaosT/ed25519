@@ -66,7 +66,7 @@ NAN_METHOD(Sign) {
 		privateKey = (unsigned char*)Buffer::Data(info[1]->ToObject());
 	} else if ((info[1]->IsObject()) && (!Buffer::HasInstance(info[1]))) {
 		Local<Value> privateKeyBuffer = info[1]->ToObject()->Get(Nan::New<String>("privateKey").ToLocalChecked())->ToObject();
-		if (!Buffer::HasInstance(privateKeyBuffer)) {
+		if (!Buffer::HasInstance(privateKeyBuffer) || (Buffer::Length(privateKeyBuffer->ToObject()) != 64)) {
 			return Nan::ThrowError("Sign requires (Buffer, {Buffer(32 or 64) | keyPair object})");
 		}
 		privateKey = (unsigned char*)Buffer::Data(privateKeyBuffer);
@@ -78,6 +78,9 @@ NAN_METHOD(Sign) {
 	size_t messageLen = Buffer::Length(message);
 	unsigned long long sigLen = 64 + messageLen;
 	unsigned char *signatureMessageData = (unsigned char*) malloc(sigLen);
+	if (signatureMessageData == NULL) {
+		return Nan::ThrowError("Could not allocate the signature buffer");
+	}
 	crypto_sign(signatureMessageData, &sigLen, messageData, messageLen, privateKey);
 
 	v8::Local<v8::Object> signature = Nan::NewBuffer(64).ToLocalChecked();
