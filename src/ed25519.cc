@@ -78,6 +78,9 @@ NAN_METHOD(Sign) {
 	size_t messageLen = Buffer::Length(message);
 	unsigned long long sigLen = 64 + messageLen;
 	unsigned char *signatureMessageData = (unsigned char*) malloc(sigLen);
+	if (signatureMessageData == NULL) {
+		return Nan::ThrowError("Could not allocate the signature buffer");
+	}
 	crypto_sign(signatureMessageData, &sigLen, messageData, messageLen, privateKey);
 
 	v8::Local<v8::Object> signature = Nan::NewBuffer(64).ToLocalChecked();
